@@ -1,15 +1,16 @@
-# app.py  清爽无日志版
+# app.py  清爽·极速版
 import streamlit as st
 import pathlib
 import torch
 import PIL.Image
+import io
 from anime_infer import run_infer
 
 # ----------- 页面美化 -----------
 st.set_page_config(page_title="XuのAnimeGAN2", page_icon="🎨", layout="centered")
 
 with st.sidebar:
-    st.title("🎌 AnimeGAN2")
+    st.title("🎌 XuのAnimeGAN2")
     st.markdown("上传真人照片，3~8 秒生成动漫风格。")
 
     # ① 模型选择
@@ -30,37 +31,42 @@ with st.sidebar:
     # ③ 设备选择
     device = st.radio("运行设备", ["cpu", "cuda"], disabled=not torch.cuda.is_available())
 
-# ----------- 主区域 -----------
-st.title("📸 真人变动漫")
-uploaded = st.file_uploader("拖拽或点击上传图片", type=["png", "jpg", "jpeg"])
-if uploaded is not None:
-    img = PIL.Image.open(uploaded).convert("RGB")
-    col1, col2 = st.columns(2)
-    col1.image(img, caption='原图', use_container_width=True)
-
+# ----------- 缓存推理函数（同图2秒内返回） -----------
+@st.cache_data(show_spinner=False)
+def _run_anime(img_bytes: bytes, model: str, device: str) -> bytes:
+    """缓存+压缩：输入原始字节，返回动漫化图片字节"""
     tmp = pathlib.Path("tmp")
     tmp.mkdir(exist_ok=True)
     inp = tmp / "in.png"
     out = tmp / "in.png"
-    img.save(inp)
 
-    # ========== 轻量级兜底 ==========
-    try:
-        with st.spinner("AI 正在动漫化，请稍候…"):
-            run_infer(checkpoint=f"weights/{model_name}",
-                      input_dir=str(tmp),
-                      output_dir=str(tmp),
-                      device=device,
-                      upsample_align=False)
+    # ① 打开即压缩到 720p，保持比例
+    img = PIL.Image.open(io.BytesIO(img_bytes)).convert("RGB")
+    img.thumbnail((720, 720), PIL.Image.LANCZOS)   # 网络传输↓70%
+    img.save(inp, quality=85)                      # 再压质量
 
-        if not out.exists():
-            raise RuntimeError("生成失败，请重试或换张图片。")
-        result = PIL.Image.open(out)
-        col2.image(result, caption='动漫化', use_container_width=True)
-        st.download_button("⬇️ 下载结果", data=out.read_bytes(),
-                          file_name="anime.png", mime="image/png")
-        st.success("完成！右侧图片可右键另存。")
+    # ② 推理（无 print，页面干净）
+    run_infer(checkpoint=f"weights/{model}",
+              input_dir=str(tmp),
+              output_dir=str(tmp),
+              device=device,
+              upsample_align=False)
 
-    except Exception:
-        st.error("❌ 生成失败，请重试或更换图片。")
-        # 不再展开 traceback，用户看不到技术堆栈
+    # ③ 返回字节
+    return out.read_bytes()
+
+# ----------- 主界面 -----------
+st.title("📸 真人变动漫")
+uploaded = st.file_uploader("拖拽或点击上传图片", type=["png", "jpg", "jpeg"])
+if uploaded is not None:
+    col1, col2 = st.columns(2)
+    col1.image(uploaded, caption='原图', use_container_width=True)
+
+    # 一键动漫化
+    with st.spinner("AI 正在动漫化，请稍候…"):
+        anime_bytes = _run_anime(uploaded.getvalue(), model_name, device)
+
+    col2.image(anime_bytes, caption='动漫化', use_container_width=True)
+    st.download_button("⬇️ 下载结果", data=anime_bytes,
+                      file_name="anime.png", mime="image/png")
+    st.success("完成！右侧图片可右键另存。")

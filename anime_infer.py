@@ -48,19 +48,19 @@ def test(args):
 def run_infer(checkpoint: str, input_dir: str, output_dir: str,
               device: str = 'cpu', upsample_align: bool = False):
     import os, pathlib, time
-    print(f'[CLOUD-LOG] 开始推理 | checkpoint={checkpoint}')
-    print(f'[CLOUD-LOG] 输入目录={input_dir} 输出目录={output_dir} device={device}')
+    # print(f'[CLOUD-LOG] 开始推理 | checkpoint={checkpoint}')
+    # print(f'[CLOUD-LOG] 输入目录={input_dir} 输出目录={output_dir} device={device}')
 
     # --- 加载模型 ---
     try:
         net = Generator()
-        print(f'[CLOUD-LOG] Generator 创建成功')
+        # print(f'[CLOUD-LOG] Generator 创建成功')
         sd = torch.load(checkpoint, map_location="cpu")
         net.load_state_dict(sd)
         net.to(device).eval()
-        print(f'[CLOUD-LOG] 模型加载完成 | 权重路径={checkpoint}')
+        # print(f'[CLOUD-LOG] 模型加载完成 | 权重路径={checkpoint}')
     except Exception as e:
-        print(f'[CLOUD-LOG] 模型加载失败 | 错误={e}')
+        # print(f'[CLOUD-LOG] 模型加载失败 | 错误={e}')
         return          # ← 这里提前退出，不会生成任何图
 
     # --- 处理单张图（你原来的逻辑） ---
@@ -78,8 +78,8 @@ def run_infer(checkpoint: str, input_dir: str, output_dir: str,
                 ).squeeze(0)
                 out_img = to_pil_image(out)
             out_img.save(os.path.join(output_dir, image_name))
-            print(f'[CLOUD-LOG] 已生成 {image_name}')
+            # print(f'[CLOUD-LOG] 已生成 {image_name}')
         else:
-            print(f'[CLOUD-LOG] 跳过非图片文件 {image_name}')
-    print('[CLOUD-LOG] 全部完成')
+    #         print(f'[CLOUD-LOG] 跳过非图片文件 {image_name}')
+    # print('[CLOUD-LOG] 全部完成')
 
