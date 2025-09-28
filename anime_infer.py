@@ -47,6 +47,9 @@ def test(args):
 # ================ 新增：供 GUI 直接调用 ================
 def run_infer(checkpoint: str, input_dir: str, output_dir: str,
               device: str = 'cpu', upsample_align: bool = False):
+    import os, sys, pathlib, time
+    print(f'[LOG] run_infer start -- checkpoint={checkpoint} device={device}')
+    print(f'[LOG] input_dir={input_dir} output_dir={output_dir}')
     """GUI 专用入口，不再起子进程"""
     import argparse
     args = argparse.Namespace()
@@ -56,3 +59,5 @@ def run_infer(checkpoint: str, input_dir: str, output_dir: str,
     args.device          = device
     args.upsample_align  = upsample_align
     test(args)
+    
+    print('[LOG] run_infer finished')
