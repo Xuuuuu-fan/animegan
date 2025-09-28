@@ -32,7 +32,7 @@ if uploaded is not None:
     tmp = pathlib.Path("tmp")
     tmp.mkdir(exist_ok=True)
     inp = tmp / "in.png"
-    out = tmp / "out.png"
+    out = tmp / "in.png"
     img.save(inp)
 
     # ========== 核心：捕获 + 实时日志 ==========
