@@ -80,6 +80,7 @@ def run_infer(checkpoint: str, input_dir: str, output_dir: str,
             out_img.save(os.path.join(output_dir, image_name))
             # print(f'[CLOUD-LOG] 已生成 {image_name}')
         else:
+            pass
     #         print(f'[CLOUD-LOG] 跳过非图片文件 {image_name}')
     # print('[CLOUD-LOG] 全部完成')
 
